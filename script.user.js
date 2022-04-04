@@ -13,6 +13,7 @@
 // @downloadURL  https://github.com/Kn0ax/VO-Turjnet/raw/utab/script.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
+// @grant        GM.xmlHttpRequest
 // ==/UserScript==
 
 
@@ -52,7 +53,7 @@ const COLOR_MAPPINGS = {
 
 let getRealWork = rgbaOrder => {
     let order = [];
-    for (var i = 0; i < 2000000; i++) {
+    for (var i = 0; i < 4000000; i++) {
         if (rgbaOrder[(i * 4) + 3] !== 0) {
             order.push(i);
         }
@@ -73,11 +74,11 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
     currentOrderCanvas.width = 2000;
-    currentOrderCanvas.height = 1000;
+    currentOrderCanvas.height = 2000;
     currentOrderCanvas.style.display = 'none';
     currentOrderCanvas = document.body.appendChild(currentOrderCanvas);
     currentPlaceCanvas.width = 2000;
-    currentPlaceCanvas.height = 1000;
+    currentPlaceCanvas.height = 2000;
     currentPlaceCanvas.style.display = 'none';
     currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
@@ -134,7 +135,7 @@ function connectSocket() {
                     duration: 10000
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`https://place.kn0ax.com/maps/${data.data}`, currentOrderCanvas, 0, 0, true);
-                order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 1000).data);
+                order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 2000).data);
                 Toastify({
                     text: `Nieuwe map geladen, ${order.length} pixels in totaal`,
                     duration: 10000
@@ -256,7 +257,7 @@ function place(x, y, color) {
                             'y': y % 1000
                         },
                         'colorIndex': color,
-                        'canvasIndex': (x > 999 ? 1 : 0)
+	                    'canvasIndex': getCanvas(x, y)
                     }
                 }
             },
@@ -271,6 +272,14 @@ function place(x, y, color) {
         }
     });
 }
+
+	function getCanvas(x, y) {	
+    if (x <= 999) {	
+        return y <= 999 ? 0 : 2;	
+    } else {	
+        return y <= 999 ? 1 : 3;	
+    }	
+}	
 
 async function getAccessToken() {
     const usingOldReddit = window.location.href.includes('new.reddit.com');
