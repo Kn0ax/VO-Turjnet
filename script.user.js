@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Videoyun and Turjnet Place Bot
 // @namespace    https://github.com/Kn0ax/VO-Turjnet
-// @version      3
+// @version      4
 // @description  does some stuff for vo at r/Place!
 // @author       NoahvdAa, Kn0ax
 // @match        https://www.reddit.com/r/place/*
