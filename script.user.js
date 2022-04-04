@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Videoyun and Turjnet Place Bot
 // @namespace    https://github.com/Kn0ax/VO-Turjnet
-// @version      1
+// @version      3
 // @description  does some stuff for vo at r/Place!
 // @author       NoahvdAa, Kn0ax
 // @match        https://www.reddit.com/r/place/*
@@ -95,7 +95,7 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     attemptPlace();
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+        if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'ping' }));
     }, 5000);
     setInterval(async () => {
         accessToken = await getAccessToken();
@@ -130,7 +130,7 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Map yükleniyor (reden: ${data.reason ? data.reason : 'verbonden met server'})...`,
+                    text: `Map yükleniyor (reden: ${data.reason ? data.reason : 'servere bağlanıyor'})...`,
                     duration: 10000
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`https://place.kn0ax.com/maps/${data.data}`, currentOrderCanvas, 0, 0, true);
@@ -138,6 +138,13 @@ function connectSocket() {
                 Toastify({
                     text: `Nieuwe map geladen, ${order.length} pixels in totaal`,
                     duration: 10000
+                }).showToast();
+                break;
+                            case 'toast':
+                Toastify({
+                    text: `Serverden mesaj: ${data.message}`,
+                    duration: data.duration || DEFAULT_TOAST_DURATION_MS,
+                    style: data.style || {}
                 }).showToast();
                 break;
             default:
@@ -206,7 +213,7 @@ async function attemptPlace() {
     try {
         if (data.errors) {
             const error = data.errors[0];
-            const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
+            const nextPixel = error.extensions.nextAvailablePixelTs + 3000 + Math.floor(Math.random() * 10000);
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
             Toastify({
@@ -324,8 +331,14 @@ async function getCurrentImageUrl(id = '0') {
 function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
     return new Promise((resolve, reject) => {
         let loadImage = ctx => {
+        GM.xmlHttpRequest({
+            method: "GET",
+            url: url,
+            responseType: 'blob',
+            onload: function(response) {
+            var urlCreator = window.URL || window.webkitURL;
+            var imageUrl = urlCreator.createObjectURL(this.response);
             var img = new Image();
-            img.crossOrigin = 'anonymous';
             img.onload = () => {
                 if (clearCanvas) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -340,7 +353,9 @@ function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
                 }).showToast();
                 setTimeout(() => loadImage(ctx), 3000);
             };
-            img.src = url;
+            img.src = imageUrl;
+  }
+})
         };
         loadImage(canvas.getContext('2d'));
     });
